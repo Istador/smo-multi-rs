@@ -2,6 +2,7 @@ mod client;
 mod cmds;
 mod coordinator;
 mod guid;
+mod json_api;
 mod net;
 mod server;
 mod settings;

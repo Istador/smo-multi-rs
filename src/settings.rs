@@ -1,4 +1,4 @@
-use std::{collections::HashSet, net::IpAddr, sync::Arc};
+use std::{collections::{HashMap, HashSet}, net::IpAddr, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
@@ -15,6 +15,7 @@ pub struct Settings {
     pub ban_list: BanListSettings,
     pub discord: DiscordSettings,
     pub persist_shines: PersistShine,
+    pub json_api: JsonApiSettings,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -68,6 +69,13 @@ pub struct DiscordSettings {
 pub struct PersistShine {
     pub enabled: bool,
     pub filename: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct JsonApiSettings {
+    pub enabled: bool,
+    pub tokens: HashMap<String, HashSet<String>>,
 }
 
 impl Default for ServerSettings {
@@ -130,5 +138,14 @@ impl Default for PersistShine {
 impl Default for FlipPovSettings {
     fn default() -> Self {
         Self::Both
+    }
+}
+
+impl Default for JsonApiSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            tokens: Default::default(),
+        }
     }
 }
