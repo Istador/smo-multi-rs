@@ -2,6 +2,7 @@ use crate::{
     client::SyncPlayer,
     cmds::{Command, ServerCommand},
     guid::Guid,
+    json_api::JsonApi,
     net::{ConnectionType, Packet, PacketData},
     settings::SyncSettings,
     types::{ClientInitError, Result, SMOError},
@@ -48,6 +49,10 @@ impl Coordinator {
                 ServerCommand::NewPlayer { .. } => self.add_client(sc).await?,
                 ServerCommand::DisconnectPlayer { guid } => self.disconnect_player(guid).await?,
                 ServerCommand::Shutdown => return Ok(false),
+                ServerCommand::JsonApi { conn, json } => {
+                    JsonApi::handle(&self.settings, &self.clients, conn, json).await?;
+                    return Ok(true);
+                },
             },
             Command::Packet(packet) => {
                 match &packet.data {

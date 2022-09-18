@@ -1,7 +1,7 @@
 use crate::{
     client::Client,
     guid::Guid,
-    net::{Packet},
+    net::{Packet, connection::Connection},
 };
 use std::{convert::Infallible, str::FromStr};
 
@@ -26,6 +26,10 @@ pub enum ServerCommand {
         guid: Guid,
     },
     Shutdown,
+    JsonApi {
+        conn: Connection,
+        json: String,
+    },
 }
 
 #[derive(Parser, Debug)]

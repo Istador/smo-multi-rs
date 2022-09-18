@@ -2,6 +2,7 @@ pub mod client;
 pub mod cmds;
 pub mod coordinator;
 pub mod guid;
+pub mod json_api;
 pub mod net;
 pub mod server;
 pub mod settings;
