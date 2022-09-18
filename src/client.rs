@@ -41,6 +41,7 @@ pub struct Client {
 
 #[derive(Default, Clone, Debug)]
 pub struct PlayerData {
+    pub ipv4: Option<IpAddr>,
     pub name: String,
     pub shine_sync: HashSet<i32>,
     pub scenario: u8,
@@ -271,6 +272,7 @@ impl Client {
                 let data = PlayerData {
                     settings,
                     name: name.clone(),
+                    ipv4: Some(conn.addr.ip()),
                     ..PlayerData::default()
                 };
 
