@@ -35,7 +35,7 @@ impl Server {
             udp_offset += 1;
             udp_offset %= 32;
 
-            tracing::info!("New client attempting to connect");
+            tracing::debug!("New client attempting to connect");
 
             tokio::spawn(async move {
                 let cli_result =
