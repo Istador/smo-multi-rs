@@ -51,7 +51,7 @@ pub struct PlayerData {
     pub loaded_save: bool,
     pub time: Duration,
     pub settings: SyncSettings,
-    pub costume: Costume,
+    pub costume: Option<Costume>,
 }
 
 #[derive(Debug)]
@@ -126,7 +126,7 @@ impl Client {
                 // TODO: Figure out why shine sync code in original
                 // code base for costume packet
                 let mut data = self.player.write().await;
-                data.costume = costume.clone();
+                data.costume = Some(costume.clone());
                 data.loaded_save = true;
                 true
             }

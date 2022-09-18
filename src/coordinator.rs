@@ -226,15 +226,20 @@ impl Coordinator {
                 },
             );
 
-            let costume_packet =
-                Packet::new(*other_id, PacketData::Costume(other_cli.costume.clone()));
+            let costume_packet = match &other_cli.costume {
+                Some(costume) => Some(Packet::new(*other_id, PacketData::Costume(costume.clone()))),
+                _ => None
+            };
 
             let last_game_packet = other_cli.last_game_packet.clone();
 
             drop(other_cli);
 
             comm.send(Command::Packet(connect_packet)).await?;
-            comm.send(Command::Packet(costume_packet)).await?;
+
+            if let Some(p) = costume_packet {
+                comm.send(Command::Packet(p)).await?;
+            }
 
             if let Some(p) = last_game_packet {
                 comm.send(Command::Packet(p)).await?;
