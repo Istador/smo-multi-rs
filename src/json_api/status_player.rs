@@ -1,7 +1,6 @@
 use serde::Serialize;
 use std::net::IpAddr;
 
-use crate::coordinator::Coordinator;
 use crate::lobby::LobbyView;
 use crate::net::{Packet, PacketData};
 use crate::stages::Stages;

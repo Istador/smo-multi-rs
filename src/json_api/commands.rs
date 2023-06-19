@@ -2,8 +2,7 @@ use clap::Parser;
 use serde::Serialize;
 
 use crate::console::{Cli, Console};
-use crate::coordinator::Coordinator;
-use crate::lobby::{self, LobbyView};
+use crate::lobby::LobbyView;
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -31,7 +30,6 @@ impl JsonApiCommands {
         }
 
         let input = &data.as_deref().unwrap().to_string();
-        drop(data);
 
         // help doesn't need permissions and is individualized to the token
         if input == "help" {
@@ -57,7 +55,6 @@ impl JsonApiCommands {
             );
         }
 
-        drop(permissions);
         drop(settings);
 
         // execute command

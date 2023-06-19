@@ -2,13 +2,11 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use serde::Deserialize;
 use serde_json::{from_str, json, Value};
-use tokio::io::{AsyncReadExt, AsyncWrite, AsyncWriteExt, BufWriter};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::net::{TcpListener, TcpStream};
 
-use crate::coordinator::Coordinator;
 use crate::json_api::{BlockClients, JsonApiCommands, JsonApiStatus};
 use crate::lobby::LobbyView;
-use crate::net::connection::Connection;
 use crate::types::Result;
 
 pub(crate) struct JsonApi {

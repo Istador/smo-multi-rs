@@ -128,7 +128,7 @@ impl Console {
                     command: PlayerCommand::Disconnect {},
                 })
                 .await?;
-                let banned = players;
+                let _banned = players;
                 // TODO Fix banned problems
 
                 let players = &self.view.get_lobby().players;
@@ -175,7 +175,7 @@ impl Console {
                     Some(to_enabled) => {
                         let mut settings = self.view.get_mut_settings().write().await;
                         settings.scenario.merge_enabled = to_enabled;
-                        save_settings(&settings);
+                        save_settings(&settings)?;
                         drop(settings);
                         if to_enabled {
                             "Enabled scenario merge"

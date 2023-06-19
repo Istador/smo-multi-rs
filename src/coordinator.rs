@@ -202,9 +202,7 @@ impl Coordinator {
                             seconds,
                         };
                         let packet = Packet::new(Guid::default(), tag_packet);
-
-                        self.send_players(&players, &ClientCommand::SelfAddressed(packet))
-                            .await?;
+                        self.send_players(&players, &ClientCommand::SelfAddressed(packet)).await?;
                     }
 
                     if let Some(is_seeking) = is_seeking {
@@ -215,8 +213,7 @@ impl Coordinator {
                             seconds: 0,
                         };
                         let packet = Packet::new(Guid::default(), tag_packet);
-                        self.send_players(&players, &ClientCommand::SelfAddressed(packet))
-                            .await;
+                        self.send_players(&players, &ClientCommand::SelfAddressed(packet)).await?;
                     }
                     "Updated tag status".to_string()
                 }
