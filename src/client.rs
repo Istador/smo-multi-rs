@@ -194,6 +194,11 @@ impl Client {
                 let mut data = self.get_player_mut();
                 data.is_2d = *is_2d;
                 data.scenario = *scenario_num;
+                if let Some(Packet { data: PacketData::Game { stage: last_stage, .. }, .. }) = &data.last_game_packet {
+                    if *stage != *last_stage {
+                        data.last_player_packet = None;
+                    }
+                }
                 if stage == "CapWorldHomeStage" && *scenario_num == 0 {
                     data.speedrun_start = true;
                     data.shine_sync.clear();
