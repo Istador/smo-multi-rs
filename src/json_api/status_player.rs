@@ -108,12 +108,18 @@ impl JsonApiStatusPlayer {
                 });
 
             let position = position_perm
-                .then_some(client.last_position)
-                .map(|pos| JsonApiStatusPlayerPosition {
-                    x: pos.x,
-                    y: pos.y,
-                    z: pos.z,
-                });
+                .then(|| match &client.last_player_packet {
+                    Some(Packet {
+                        data: PacketData::Player { pos, .. },
+                        ..
+                    }) => Some(JsonApiStatusPlayerPosition {
+                        x: pos.x,
+                        y: pos.y,
+                        z: pos.z,
+                    }),
+                    _ => None,
+                })
+                .flatten();
 
             let ipv4 = ipv4_perm.then_some(client.ipv4).flatten();
 

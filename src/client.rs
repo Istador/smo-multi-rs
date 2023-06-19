@@ -45,7 +45,7 @@ pub struct PlayerData {
     pub is_2d: bool,
     pub is_seeking: bool,
     pub last_game_packet: Option<Packet>,
-    pub last_position: Vector3,
+    pub last_player_packet: Option<Packet>,
     pub speedrun_start: bool,
     pub loaded_save: bool,
     pub time: Duration,
@@ -62,8 +62,8 @@ impl PlayerData {
             scenario: Default::default(),
             is_2d: Default::default(),
             is_seeking: Default::default(),
-            last_position: Default::default(),
             last_game_packet: Default::default(),
+            last_player_packet: Default::default(),
             speedrun_start: Default::default(),
             loaded_save: Default::default(),
             time: Default::default(),
@@ -161,10 +161,6 @@ impl Client {
                 ref mut pos,
                 ..
             } => {
-                let mut data = self.lobby.get_mut_client(&self.guid)?;
-                *data.last_position = **pos;
-                drop(data);
-
                 let settings = self.lobby.settings.read().await;
                 if settings.flip.enabled
                     && settings.flip.pov.is_others_flip()
@@ -176,6 +172,12 @@ impl Client {
                     *pos += get_mario_size(data.is_2d) * Vector3::y();
                     *rot *= rot_quad;
                 }
+                drop(settings);
+
+                let mut data = self.lobby.get_mut_client(&self.guid)?;
+                data.last_player_packet = Some(packet.clone());
+                drop(data);
+
                 PacketDestination::Coordinator
             }
             PacketData::Costume(costume) => {
