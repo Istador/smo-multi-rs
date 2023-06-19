@@ -4,7 +4,6 @@ use std::net::IpAddr;
 use crate::lobby::LobbyView;
 use crate::net::{Packet, PacketData};
 use crate::stages::Stages;
-use crate::types::Vector3;
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -25,7 +24,7 @@ pub(in crate::json_api) struct JsonApiStatusPlayer {
     scenario: Option<i8>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    position: Option<Vector3>,
+    position: Option<JsonApiStatusPlayerPosition>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     tagged: Option<bool>,
@@ -108,7 +107,13 @@ impl JsonApiStatusPlayer {
                     cap: cost.cap_name.to_string(),
                 });
 
-            let position = position_perm.then_some(client.last_position);
+            let position = position_perm
+                .then_some(client.last_position)
+                .map(|pos| JsonApiStatusPlayerPosition {
+                    x: pos.x,
+                    y: pos.y,
+                    z: pos.z,
+                });
 
             let ipv4 = ipv4_perm.then_some(client.ipv4).flatten();
 
@@ -136,4 +141,12 @@ impl JsonApiStatusPlayer {
 struct JsonApiStatusPlayerCostume {
     body: String,
     cap: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct JsonApiStatusPlayerPosition {
+    x: f32,
+    y: f32,
+    z: f32,
 }
