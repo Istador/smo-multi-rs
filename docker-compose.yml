@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     ports:
     - 1027:1027/tcp
+    - 1030:1030/tcp
     - 51888-51920:51888-51920/udp
     environment:
       RUST_LOG       : info
