@@ -32,6 +32,7 @@ The possible player status permissions are hardcoded though:
 - `Status/Players/Stage`
 - `Status/Players/Scenario`
 - `Status/Players/Position`
+- `Status/Players/Rotation`
 - `Status/Players/Tagged`
 - `Status/Players/Costume`
 - `Status/Players/IPv4`

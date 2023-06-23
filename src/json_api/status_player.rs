@@ -27,6 +27,9 @@ pub(in crate::json_api) struct JsonApiStatusPlayer {
     position: Option<JsonApiStatusPlayerPosition>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    rotation: Option<JsonApiStatusPlayerRotation>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     tagged: Option<bool>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -51,6 +54,7 @@ impl JsonApiStatusPlayer {
         let scenario_perm = permissions.contains("Status/Players/Scenario");
         let costume_perm = permissions.contains("Status/Players/Costume");
         let position_perm = permissions.contains("Status/Players/Position");
+        let rotation_perm = permissions.contains("Status/Players/Rotation");
         let ipv4_perm = permissions.contains("Status/Players/IPv4");
         let tagged_perm = permissions.contains("Status/Players/Tagged");
 
@@ -121,6 +125,21 @@ impl JsonApiStatusPlayer {
                 })
                 .flatten();
 
+            let rotation = rotation_perm
+                .then(|| match &client.last_player_packet {
+                    Some(Packet {
+                        data: PacketData::Player { rot, .. },
+                        ..
+                    }) => Some(JsonApiStatusPlayerRotation {
+                        w: rot.w,
+                        x: rot.i,
+                        y: rot.j,
+                        z: rot.k,
+                    }),
+                    _ => None,
+                })
+                .flatten();
+
             let ipv4 = ipv4_perm.then_some(client.ipv4).flatten();
 
             let tagged = tagged_perm.then_some(client.is_seeking);
@@ -132,6 +151,7 @@ impl JsonApiStatusPlayer {
                 stage,
                 scenario,
                 position,
+                rotation,
                 costume,
                 tagged,
                 ipv4,
@@ -152,6 +172,15 @@ struct JsonApiStatusPlayerCostume {
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
 struct JsonApiStatusPlayerPosition {
+    x: f32,
+    y: f32,
+    z: f32,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct JsonApiStatusPlayerRotation {
+    w: f32,
     x: f32,
     y: f32,
     z: f32,
