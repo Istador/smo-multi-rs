@@ -35,6 +35,9 @@ pub(in crate::json_api) struct JsonApiStatusPlayer {
     #[serde(skip_serializing_if = "Option::is_none")]
     costume: Option<JsonApiStatusPlayerCostume>,
 
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Is2D")]
+    is_2d: Option<bool>,
+
     #[serde(skip_serializing_if = "Option::is_none", rename = "IPv4")]
     ipv4: Option<IpAddr>,
 }
@@ -55,6 +58,7 @@ impl JsonApiStatusPlayer {
         let costume_perm = permissions.contains("Status/Players/Costume");
         let position_perm = permissions.contains("Status/Players/Position");
         let rotation_perm = permissions.contains("Status/Players/Rotation");
+        let is2d_perm = permissions.contains("Status/Players/Is2D");
         let ipv4_perm = permissions.contains("Status/Players/IPv4");
         let tagged_perm = permissions.contains("Status/Players/Tagged");
 
@@ -140,6 +144,16 @@ impl JsonApiStatusPlayer {
                 })
                 .flatten();
 
+            let is_2d = is2d_perm
+                .then(|| match &client.last_game_packet {
+                    Some(Packet {
+                        data: PacketData::Game { is_2d, .. },
+                        ..
+                    }) => Some(*is_2d),
+                    _ => None,
+                })
+                .flatten();
+
             let ipv4 = ipv4_perm.then_some(client.ipv4).flatten();
 
             let tagged = tagged_perm.then_some(client.is_seeking);
@@ -153,6 +167,7 @@ impl JsonApiStatusPlayer {
                 position,
                 rotation,
                 costume,
+                is_2d,
                 tagged,
                 ipv4,
             };

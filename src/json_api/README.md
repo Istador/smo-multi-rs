@@ -35,6 +35,7 @@ The possible player status permissions are hardcoded though:
 - `Status/Players/Rotation`
 - `Status/Players/Tagged`
 - `Status/Players/Costume`
+- `Status/Players/Is2D`
 - `Status/Players/IPv4`
 
 ---
