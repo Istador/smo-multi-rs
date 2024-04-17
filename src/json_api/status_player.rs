@@ -52,7 +52,7 @@ impl JsonApiStatusPlayer {
 
         let id_perm = permissions.contains("Status/Players/ID");
         let name_perm = permissions.contains("Status/Players/Name");
-        let kingdom_per = permissions.contains("Status/Players/Kingdom");
+        let kingdom_perm = permissions.contains("Status/Players/Kingdom");
         let stage_perm = permissions.contains("Status/Players/Stage");
         let scenario_perm = permissions.contains("Status/Players/Scenario");
         let costume_perm = permissions.contains("Status/Players/Costume");
@@ -71,7 +71,7 @@ impl JsonApiStatusPlayer {
             let client = client_ref.value();
             let name = name_perm.then(|| client.name.to_string());
 
-            let kingdom = kingdom_per
+            let kingdom = kingdom_perm
                 .then(|| match &client.last_game_packet {
                     Some(Packet {
                         data: PacketData::Game { stage, .. },
