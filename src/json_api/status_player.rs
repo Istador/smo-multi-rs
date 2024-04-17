@@ -50,17 +50,17 @@ impl JsonApiStatusPlayer {
             return None;
         }
 
-        let id_perm = permissions.contains("Status/Players/ID");
-        let name_perm = permissions.contains("Status/Players/Name");
-        let kingdom_perm = permissions.contains("Status/Players/Kingdom");
-        let stage_perm = permissions.contains("Status/Players/Stage");
+        let id_perm       = permissions.contains("Status/Players/ID");
+        let name_perm     = permissions.contains("Status/Players/Name");
+        let kingdom_perm  = permissions.contains("Status/Players/Kingdom");
+        let stage_perm    = permissions.contains("Status/Players/Stage");
         let scenario_perm = permissions.contains("Status/Players/Scenario");
-        let costume_perm = permissions.contains("Status/Players/Costume");
+        let costume_perm  = permissions.contains("Status/Players/Costume");
         let position_perm = permissions.contains("Status/Players/Position");
         let rotation_perm = permissions.contains("Status/Players/Rotation");
-        let is2d_perm = permissions.contains("Status/Players/Is2D");
-        let ipv4_perm = permissions.contains("Status/Players/IPv4");
-        let tagged_perm = permissions.contains("Status/Players/Tagged");
+        let is2d_perm     = permissions.contains("Status/Players/Is2D");
+        let ipv4_perm     = permissions.contains("Status/Players/IPv4");
+        let tagged_perm   = permissions.contains("Status/Players/Tagged");
 
         let mut players: Vec<JsonApiStatusPlayer> = Vec::new();
         for client_ref in view.get_lobby().players.iter() {
