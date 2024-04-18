@@ -195,8 +195,10 @@ pub enum ConnectionType {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TagUpdate {
-    Time = 1,
-    State = 2,
+    Unknown = 0,
+    Time    = 1,
+    State   = 2,
+    Both    = 3,
 }
 
 impl TagUpdate {}
@@ -250,10 +252,11 @@ where
                 stage: buf_size_to_string(buf, STAGE_GAME_NAME_SIZE)?,
             },
             5 => PacketData::Tag {
-                update_type: if buf.get_u8() == 1 {
-                    TagUpdate::Time
-                } else {
-                    TagUpdate::State
+                update_type: match buf.get_u8() {
+                    1 => TagUpdate::Time,
+                    2 => TagUpdate::State,
+                    3 => TagUpdate::Both,
+                    _ => TagUpdate::Unknown,
                 },
                 is_it: buf.get_u8() != 0,
                 seconds: buf.get_u8(),
@@ -370,8 +373,10 @@ where
                 minutes,
             } => {
                 let tag = match update_type {
-                    TagUpdate::Time => 1,
-                    TagUpdate::State => 2,
+                    TagUpdate::Unknown => 0,
+                    TagUpdate::Time    => 1,
+                    TagUpdate::State   => 2,
+                    TagUpdate::Both    => 3,
                 };
                 buf.put_u8(tag);
                 buf.put_u8((*is_it).into());

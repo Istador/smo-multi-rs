@@ -214,6 +214,11 @@ impl Client {
                     crate::net::TagUpdate::State => {
                         data.is_seeking = *is_it;
                     }
+                    crate::net::TagUpdate::Both => {
+                        data.time       = Duration::from_secs(*seconds as u64 + *minutes as u64 * 60);
+                        data.is_seeking = *is_it;
+                    }
+                    _ => {}
                 }
                 PacketDestination::Broadcast
             }
