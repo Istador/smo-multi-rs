@@ -108,12 +108,17 @@ impl JsonApiStatusPlayer {
                 .flatten();
 
             let costume = costume_perm
-                .then_some(())
-                .and(client.costume.as_ref())
-                .map(|cost| JsonApiStatusPlayerCostume {
-                    body: cost.body_name.to_string(),
-                    cap: cost.cap_name.to_string(),
-                });
+                .then(|| match &client.last_costume_packet {
+                    Some(Packet {
+                        data: PacketData::Costume(cost),
+                        ..
+                    }) => Some(JsonApiStatusPlayerCostume {
+                        body: cost.body_name.to_string(),
+                        cap: cost.cap_name.to_string(),
+                    }),
+                    _ => None,
+                })
+                .flatten();
 
             let position = position_perm
                 .then(|| match &client.last_player_packet {
@@ -156,7 +161,7 @@ impl JsonApiStatusPlayer {
 
             let ipv4 = ipv4_perm.then_some(client.ipv4).flatten();
 
-            let tagged = tagged_perm.then_some(client.is_seeking);
+            let tagged = tagged_perm.then_some(client.is_seeking).flatten();
 
             let player = JsonApiStatusPlayer {
                 id,

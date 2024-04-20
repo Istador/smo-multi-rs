@@ -293,12 +293,11 @@ impl Coordinator {
             _ => unreachable!(),
         };
 
-        let (_connection_type, client_name) = match &packet.data {
+        let client_name = match &packet.data {
             PacketData::Connect {
-                c_type,
                 client_name,
                 ..
-            } => (c_type, client_name),
+            } => client_name,
             _ => unreachable!(),
         };
         let id = cli.guid;
@@ -327,13 +326,14 @@ impl Coordinator {
             packet.id,
             self.lobby.players.len() - 1,
         );
+
         let settings = self.lobby.settings.read().await;
         let max_player = settings.server.max_players;
-
         drop(settings);
-        // Sync connection, costumes, and last game packet
+
+        // Sync other players to the new player
         for other_ref in self.lobby.players.iter() {
-            let other_id = other_ref.key();
+            let other_id  = other_ref.key();
             let other_cli = other_ref.value();
 
             let connect_packet = Packet::new(
@@ -345,31 +345,62 @@ impl Coordinator {
                 },
             );
 
-            let costume_packet = match &other_cli.costume {
-                Some(costume) => Some(Packet::new(*other_id, PacketData::Costume(costume.clone()))),
-                _ => None,
-            };
+            let packets = [
+                Some(connect_packet),
+                other_cli.last_costume_packet.clone(),
+                other_cli.last_capture_packet.clone(),
+                other_cli.create_tag_packet(*other_id),
+                other_cli.last_game_packet.clone(),
+                other_cli.last_player_packet.clone(),
+            ];
 
-            let last_game_packet = other_cli.last_game_packet.clone();
-
-            drop(other_cli);
-
-            comm.send(ClientCommand::Packet(connect_packet)).await?;
-
-            if let Some(p) = costume_packet {
-                comm.send(ClientCommand::Packet(p)).await?;
-            }
-
-            if let Some(p) = last_game_packet {
-                comm.send(ClientCommand::Packet(p)).await?;
+            for packet in packets {
+                if let Some(p) = packet {
+                    comm.send(ClientCommand::Packet(p)).await?;
+                }
             }
         }
 
-        self.broadcast(&ClientCommand::Packet(packet))
+        let client_id = packet.id;
+        let conn_type = match packet.data {
+            PacketData::Connect {
+                c_type,
+                ..
+            } => c_type,
+            _ => unreachable!(),
+        };
+
+        // Sync new player to other players
+        self.broadcast(&ClientCommand::Packet(packet))?;
+
+        // make the other clients reset their puppet cache for this client, if it is a new connection (after restart)
+        if conn_type == ConnectionType::FirstConnection {
+            // empty tag packet
+            self.broadcast(&ClientCommand::Packet(Packet::new(
+                client_id,
+                PacketData::Tag {
+                    update_type : TagUpdate::Both,
+                    is_it       : false,
+                    seconds     : 0,
+                    minutes     : 0,
+                },
+            )))?;
+            // empty capture packet
+            self.broadcast(&ClientCommand::Packet(Packet::new(
+                client_id,
+                PacketData::Capture {
+                    model: "".to_string(),
+                },
+            )))?;
+        }
+
+        Ok(())
     }
 
     async fn disconnect_player(&mut self, guid: Guid) -> Result<()> {
         tracing::info!("Disconnecting player {}", guid);
+        // TODO: do not remove the player, but mark it as disconnected, so that
+        // after a reconnect its packets are still there to send to new players.
         if let Some((guid, data)) = self.lobby.players.remove(&guid) {
             // let name = &data.read().await.name;
             self.lobby.names.0.write().await.remove_by_left(&guid);
