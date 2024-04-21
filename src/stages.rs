@@ -228,14 +228,14 @@ pub struct Stages {}
 impl Stages {
     pub fn input2stage(input: &str) -> Option<String> {
         // alias value
-        if ALIAS2STAGE.contains_key(&input) {
+        if Self::is_alias(input) {
             return match ALIAS2STAGE.get(&input) {
                 Some(stage) => Some(stage.to_string()),
                 None => None,
             };
         }
         // exact stage value
-        if STAGE2ALIAS.contains_key(&input) {
+        if Self::is_stage(input) {
             return Some(input.to_string());
         }
         // force input value with a !
@@ -253,5 +253,13 @@ impl Stages {
             },
             None => None,
         }
+    }
+
+    pub fn is_alias(input: &str) -> bool {
+        return ALIAS2STAGE.contains_key(&input);
+    }
+
+    pub fn is_stage(input: &str) -> bool {
+        return STAGE2ALIAS.contains_key(&input);
     }
 }

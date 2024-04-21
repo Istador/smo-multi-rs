@@ -444,31 +444,6 @@ async fn client_sync_shines(
     Ok(())
 }
 
-pub fn unalias_map(alias: &str) -> Option<String> {
-    let unalias = match alias {
-        "cap" => "CapWorldHomeStage",
-        "cascade" => "WaterfallWorldHomeStage",
-        "sand" => "SandWorldHomeStage",
-        "lake" => "LakeWorldHomeStage",
-        "wooded" => "ForestWorldHomeStage",
-        "cloud" => "CloudWorldHomeStage",
-        "lost" => "ClashWorldHomeStage",
-        "metro" => "CityWorldHomeStage",
-        "sea" => "SeaWorldHomeStage",
-        "snow" => "SnowWorldHomeStage",
-        "lunch" => "LavaWorldHomeStage",
-        "ruined" => "BossRaidWorldHomeStage",
-        "bowser" => "SkyWorldHomeStage",
-        "moon" => "MoonWorldHomeStage",
-        "mush" => "PeachWorldHomeStage",
-        "dark" => "Special1WorldHomeStage",
-        "darker" => "Special2WorldHomeStage",
-        _ => return None,
-    };
-
-    Some(unalias.to_string())
-}
-
 async fn save_shines(filename: String, shines: SyncShineBag) -> Result<()> {
     let shines = shines.read().await;
     let json_str = serde_json::to_string(&shines.clone())?;

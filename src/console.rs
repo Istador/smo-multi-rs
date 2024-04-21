@@ -3,11 +3,11 @@ use crate::{
         console::{FlipCommand, ScenarioCommand, ShineArg, TagCommand, UdpCommand},
         Command, ConsoleCommand, ExternalCommand, PlayerCommand, ServerWideCommand, ShineCommand,
     },
-    coordinator::unalias_map,
     guid::Guid,
     lobby::LobbyView,
     player_holder::PlayerSelect,
     settings::{load_settings, save_settings},
+    stages::Stages,
     types::{Result, SMOError},
 };
 use clap::Parser;
@@ -65,7 +65,7 @@ impl Console {
                 let players: PlayerSelect<Guid> = PlayerSelect::AllPlayers;
                 let players = players.into_guid_vec(&self.view)?;
 
-                let actual_stage = unalias_map(&stage);
+                let actual_stage = Stages::input2stage(&stage);
                 let actual_stage = match (actual_stage, force) {
                     (Some(s), _) => s,
                     (None, true) => stage.clone(),
@@ -97,7 +97,7 @@ impl Console {
                 let players: PlayerSelect<String> = (&players[..]).into();
                 let players = players.into_guid_vec(&self.view).await?;
 
-                let actual_stage = unalias_map(&stage);
+                let actual_stage = Stages::input2stage(&stage);
                 let actual_stage = match (actual_stage, force) {
                     (Some(s), _) => s,
                     (None, true) => stage.clone(),
