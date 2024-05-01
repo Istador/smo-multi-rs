@@ -1,6 +1,6 @@
 use crate::{
     cmds::{
-        console::{BanCommand, FlipCommand, ScenarioCommand, ShineArg, TagCommand, UdpCommand},
+        console::{BanCommand, FlipCommand, ScenarioCommand, ShineArg, TagCommand, UdpCommand, UnbanCommand},
         Command, ConsoleCommand, ExternalCommand, PlayerCommand, ServerWideCommand, ShineCommand,
     },
     guid::Guid,
@@ -196,6 +196,17 @@ impl Console {
                     }).await?;
 
                     "Banned ip: ".to_string() + &ipv4.to_string()
+                },
+            },
+            ConsoleCommand::Unban(subcmd) => match subcmd {
+                UnbanCommand::IP { ipv4 } => {
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.ip_addresses.remove(&ipv4);
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    "Unbanned ip: ".to_string() + &ipv4.to_string()
                 },
             },
             ConsoleCommand::Crash { players } => {

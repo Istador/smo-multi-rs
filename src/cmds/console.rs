@@ -21,6 +21,8 @@ pub enum ConsoleCommand {
     },
     #[clap(subcommand)]
     Ban(BanCommand),
+    #[clap(subcommand)]
+    Unban(UnbanCommand),
     Crash {
         players: Vec<SinglePlayerSelect>,
     },
@@ -54,6 +56,14 @@ pub enum BanCommand {
     Profile {
         profile_id: Guid,
     },
+    IP {
+        ipv4: IpAddr,
+    },
+}
+
+#[derive(Subcommand, Debug, Clone)]
+#[clap(rename_all = "lower")]
+pub enum UnbanCommand {
     IP {
         ipv4: IpAddr,
     },
