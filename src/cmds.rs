@@ -14,7 +14,7 @@ use crate::{
     types::{Result, SMOError},
 };
 
-use std::{collections::HashSet, net::IpAddr};
+use std::{collections::BTreeSet, net::IpAddr};
 
 use self::reply::ReplyChannel;
 
@@ -79,21 +79,21 @@ impl Players {
         }
     }
 
-    pub fn get_guids(&self, lobby: &Lobby) -> HashSet<Guid> {
+    pub fn get_guids(&self, lobby: &Lobby) -> BTreeSet<Guid> {
         match self {
             Self::All           => lobby.players.iter().map(|x| *x.key()).collect(),
             Self::Individual(p) => p.iter().cloned().collect(),
         }
     }
 
-    pub fn get_ipv4s(&self, lobby: &Lobby) -> HashSet<IpAddr> {
+    pub fn get_ipv4s(&self, lobby: &Lobby) -> BTreeSet<IpAddr> {
         match self {
             Self::All           => lobby.players.iter().filter_map(|x| x.value().ipv4).collect(),
             Self::Individual(p) => lobby.players.iter().filter(|x| p.contains(x.key())).filter_map(|x| x.value().ipv4).collect(),
         }
     }
 
-    pub fn get_names(&self, lobby: &Lobby) -> HashSet<String> {
+    pub fn get_names(&self, lobby: &Lobby) -> BTreeSet<String> {
         match self {
             Self::All           => lobby.players.iter().map(|x| x.value().name.to_string()).collect(),
             Self::Individual(p) => lobby.players.iter().filter(|x| p.contains(x.key())).map(|x| x.value().name.to_string()).collect(),

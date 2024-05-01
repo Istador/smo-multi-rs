@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     fmt::Display,
     fs::File,
     io::{BufReader, BufWriter},
@@ -45,7 +45,7 @@ pub struct ServerSettings {
 #[serde(rename_all = "PascalCase")]
 pub struct FlipSettings {
     pub enabled: bool,
-    pub players: HashSet<Guid>,
+    pub players: BTreeSet<Guid>,
     pub pov: FlipPovSettings,
 }
 
@@ -111,9 +111,9 @@ pub struct ScenarioSettings {
 #[serde(rename_all = "PascalCase")]
 pub struct BanListSettings {
     pub enabled: bool,
-    pub players: HashSet<Guid>,
-    pub ip_addresses: HashSet<IpAddr>,
-    pub stages: HashSet<String>,
+    pub players: BTreeSet<Guid>,
+    pub ip_addresses: BTreeSet<IpAddr>,
+    pub stages: BTreeSet<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -150,7 +150,7 @@ pub struct Udp {
 pub struct JsonApiSettings {
     pub enabled: bool,
     pub port: u16,
-    pub tokens: HashMap<String, HashSet<String>>,
+    pub tokens: BTreeMap<String, BTreeSet<String>>,
 }
 
 impl Default for ServerSettings {
