@@ -1,6 +1,6 @@
 use crate::{
     cmds::{
-        console::{FlipCommand, ScenarioCommand, ShineArg, TagCommand, UdpCommand},
+        console::{BanCommand, FlipCommand, ScenarioCommand, ShineArg, TagCommand, UdpCommand},
         Command, ConsoleCommand, ExternalCommand, PlayerCommand, ServerWideCommand, ShineCommand,
     },
     guid::Guid,
@@ -119,36 +119,43 @@ impl Console {
                 .await?;
                 format!("Sent players to {}:{}", stage, scenario)
             }
-            ConsoleCommand::Ban { players } => {
-                let players: PlayerSelect<String> = (&players[..]).into();
-                let players = players.into_guid_vec(&self.view).await?;
+            ConsoleCommand::Ban(subcmd) => match subcmd {
+                BanCommand::Player { players } => {
+                    let players: PlayerSelect<String> = (&players[..]).into();
+                    let players = players.into_guid_vec(&self.view).await?;
 
-                self.request_comm(ExternalCommand::Player {
-                    players: players.clone(),
-                    command: PlayerCommand::Disconnect {},
-                })
-                .await?;
-                let _banned = players;
-                // TODO Fix banned problems
+                    // get player data for banned players
+                    let lobby = &self.view.get_lobby();
+                    let guids = players.get_guids(lobby);
+                    let ips   = players.get_ipv4s(lobby);
+                    let names = players.get_names(lobby);
 
-                let players = &self.view.get_lobby().players;
-                let ips = players.iter().filter_map(|x| x.value().ipv4).collect();
-                let ids = players.iter().map(|x| *x.key()).collect();
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.ip_addresses = settings
+                        .ban_list
+                        .ip_addresses
+                        .union(&ips)
+                        .copied()
+                        .collect();
+                    settings.ban_list.players = settings
+                        .ban_list
+                        .players
+                        .union(&guids)
+                        .copied()
+                        .collect();
+                    save_settings(&settings)?;
+                    drop(settings);
 
-                let mut settings = self.view.get_mut_settings().write().await;
-                let updated_ips_ban = settings
-                    .ban_list
-                    .ip_addresses
-                    .union(&ips)
-                    .copied()
-                    .collect();
-                let updated_player_ban = settings.ban_list.players.union(&ids).copied().collect();
+                    // crash connected players
+                    self.request_comm(ExternalCommand::Player {
+                        players : players,
+                        command : PlayerCommand::Crash {},
+                    }).await?;
 
-                settings.ban_list.ip_addresses = updated_ips_ban;
-                settings.ban_list.players = updated_player_ban;
-
-                "Banned players".to_string()
-            }
+                    "Banned players: ".to_string() + &Vec::from_iter(names).join(", ")
+                },
+            },
             ConsoleCommand::Crash { players } => {
                 let players: PlayerSelect<String> = (&players[..]).into();
                 let players = players.into_guid_vec(&self.view).await?;

@@ -19,9 +19,8 @@ pub enum ConsoleCommand {
         scenario: i8,
         players: Vec<SinglePlayerSelect>,
     },
-    Ban {
-        players: Vec<SinglePlayerSelect>,
-    },
+    #[clap(subcommand)]
+    Ban(BanCommand),
     Crash {
         players: Vec<SinglePlayerSelect>,
     },
@@ -44,6 +43,14 @@ pub enum ConsoleCommand {
     Udp(UdpCommand),
     LoadSettings,
     Restart,
+}
+
+#[derive(Subcommand, Debug, Clone)]
+#[clap(rename_all = "lower")]
+pub enum BanCommand {
+    Player {
+        players: Vec<SinglePlayerSelect>,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]
