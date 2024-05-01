@@ -182,10 +182,10 @@ impl Coordinator {
                 }
                 PlayerCommand::Crash {} => {
                     let data = PacketData::ChangeStage {
-                        id: "$among$us/SubArea".to_string(),
-                        stage: "$agogusStage".to_string(),
-                        scenario: 21,
-                        sub_scenario: 69, // invalid id
+                        id           : "$among$us/cr4sh%".to_string(),
+                        stage        : "$agogusStage".to_string(),
+                        scenario     : 21,
+                        sub_scenario : 69, // invalid id
                     };
                     let packet = Packet::new(Guid::default(), data);
                     let cmd = ClientCommand::SelfAddressed(packet);
