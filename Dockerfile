@@ -27,3 +27,6 @@ FROM debian:bookworm-slim AS runtime
 COPY --from=builder ./target/release/smo-rs ./target/release/smo-rs
 
 ENTRYPOINT ["/target/release/smo-rs"]
+EXPOSE     1027/tcp
+WORKDIR    /data/
+VOLUME     /data/

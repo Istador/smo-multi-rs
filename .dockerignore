@@ -1,10 +1,10 @@
 /.git/
 /.dockerignore
+/data/
 /docker-compose.yml
 /Dockerfile
 /examples/*/target
 /proxy.Dockerfile
-/settings.json
 /target/
 
 /**/.gitignore

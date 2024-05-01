@@ -16,7 +16,7 @@ services:
       RUST_LOG       : info
       #RUST_BACKTRACE : 1
     volumes:
-    - ./settings.json:/settings.json
+    - ./data/:/data/
 
   proxy:
     build:
