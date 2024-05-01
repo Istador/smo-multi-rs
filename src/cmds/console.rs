@@ -51,6 +51,9 @@ pub enum BanCommand {
     Player {
         players: Vec<SinglePlayerSelect>,
     },
+    Profile {
+        profile_id: Guid,
+    },
     IP {
         ipv4: IpAddr,
     },

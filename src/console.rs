@@ -155,6 +155,27 @@ impl Console {
 
                     "Banned players: ".to_string() + &Vec::from_iter(names).join(", ")
                 },
+                BanCommand::Profile { profile_id } => {
+                    // get connected players
+                    let lobby = &self.view.get_lobby();
+                    let guids: Vec<Guid> = lobby.players.iter().filter(|x| x.key() == &profile_id).map(|x| *x.key()).collect();
+                    let players: PlayerSelect<Guid> = guids.into();
+                    let players = players.into_guid_vec(&self.view).unwrap();
+
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.players.insert(profile_id);
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    // crash connected players
+                    self.request_comm(ExternalCommand::Player {
+                        players : players,
+                        command : PlayerCommand::Crash {},
+                    }).await?;
+
+                    "Banned profile: ".to_string() + &profile_id.to_string()
+                },
                 BanCommand::IP { ipv4 } => {
                     // get connected players
                     let lobby = &self.view.get_lobby();
