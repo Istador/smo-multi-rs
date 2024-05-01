@@ -66,7 +66,11 @@ impl Listener {
                 }
 
                 if settings.server.max_players as usize <= self.lobby.players.len() {
-                    tracing::warn!("Connection attempt with too many players");
+                    tracing::warn!("Connection attempt with too many players from {}", addr.to_string());
+                    tokio::spawn(async move {
+                        Client::ignore_client(Connection::new(socket), addr.to_string()).await
+                    });
+                    continue;
                 }
             }
 
