@@ -429,6 +429,10 @@ impl Client {
             } => {
                 let settings = lobby.settings.read().await;
                 if settings.ban_list.players.contains(&connect.id) {
+                    let identifier = format!("{} ({}/{})", tcp_sock_addr.to_string(), name, connect.id);
+                    tracing::warn!("Banned profile tried to connect: {}", identifier);
+                    tracing::info!("Ignoring player {}", identifier);
+                    Self::ignore_client(conn, identifier).await?;
                     return Err(SMOError::ClientInit(ClientInitError::BannedID));
                 }
                 drop(settings);
@@ -513,6 +517,49 @@ impl Client {
         }?;
 
         to_coord.send(new_player).await?;
+        Ok(())
+    }
+
+    pub async fn ignore_client(mut conn: Connection, mut identifier: String) -> Result<()> {
+        // send server init (required to crash ignored players later)
+        conn.write_packet(&Packet::new(
+            Guid::default(),
+            PacketData::Init { max_players: 1 },
+        )).await?;
+        loop {
+            match conn.read_packet().await {
+                // disconnect
+                Err(_) => { break; },
+                // client init
+                Ok(Packet { id, data: PacketData::Connect { client_name, .. }, .. }) => {
+                    identifier = format!("{} ({}/{})", conn.addr.to_string(), client_name, id);
+                    tracing::debug!("{} packet received from {}.", "connect", identifier);
+                    tracing::info!("Ignoring player {}", identifier);
+                },
+                // client entered a stage
+                Ok(Packet { data: PacketData::Game { stage, .. }, .. }) => {
+                    tracing::debug!("{} packet received from {}.", "game", identifier);
+                    tracing::info!("Crashing ignored player {} after entering stage {}", identifier, stage);
+                    // wait 500ms
+                    tokio::time::sleep(Duration::from_millis(500)).await;
+                    // crash player
+                    conn.write_packet(&Packet::new(
+                        Guid::default(),
+                        PacketData::ChangeStage {
+                            id           : "$among$us/SubArea".to_string(),
+                            stage        : "$agogusStage".to_string(),
+                            scenario     : 21,
+                            sub_scenario : 69,
+                        },
+                    )).await?;
+                },
+                // ignore all other packages
+                Ok(Packet { data, .. }) => {
+                    tracing::debug!("{} packet received from {}.", data.get_type_name(), identifier);
+                },
+            };
+        };
+        tracing::info!("Ignored player disconnected {}", identifier);
         Ok(())
     }
 
