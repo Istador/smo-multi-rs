@@ -17,16 +17,25 @@ pub(crate) struct JsonApi {
 impl JsonApi {
     pub async fn create(view: LobbyView) -> Result<Option<Self>> {
         let settings = view.get_lobby().settings.read().await;
-        if !settings.json_api.enabled {
+        let enabled  = settings.json_api.enabled;
+        let tcp_port = settings.server.port;
+        let api_port = settings.json_api.port;
+        drop(settings);
+
+        if !enabled {
             return Ok(None);
         }
+
+        if api_port == tcp_port {
+            return Ok(None);
+        }
+
         // TcpListener.bind.json_api.port
         let listener = TcpListener::bind(SocketAddr::new(
             IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-            settings.json_api.port,
+            api_port,
         ))
         .await?;
-        drop(settings);
 
         tracing::trace!("Created json api");
         Ok(Some(Self { listener, view }))
