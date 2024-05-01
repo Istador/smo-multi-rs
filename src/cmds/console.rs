@@ -64,6 +64,9 @@ pub enum BanCommand {
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "lower")]
 pub enum UnbanCommand {
+    Profile {
+        profile_id: Guid,
+    },
     IP {
         ipv4: IpAddr,
     },

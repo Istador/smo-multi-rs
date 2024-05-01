@@ -199,6 +199,15 @@ impl Console {
                 },
             },
             ConsoleCommand::Unban(subcmd) => match subcmd {
+                UnbanCommand::Profile { profile_id } => {
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.players.remove(&profile_id);
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    "Unbanned profile: ".to_string() + &profile_id.to_string()
+                },
                 UnbanCommand::IP { ipv4 } => {
                     // update settings
                     let mut settings = self.view.get_mut_settings().write().await;
