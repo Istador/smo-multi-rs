@@ -120,6 +120,27 @@ impl Console {
                 format!("Sent players to {}:{}", stage, scenario)
             }
             ConsoleCommand::Ban(subcmd) => match subcmd {
+                BanCommand::List => {
+                    let settings = self.view.get_lobby().settings.read().await;
+                    let mut list = Vec::new();
+                    list.push("BanList: ".to_string());
+                    list.push(if settings.ban_list.enabled { "enabled" } else { "disabled" }.to_string());
+                    if !settings.ban_list.ip_addresses.is_empty() {
+                        list.push("\nBanned IPv4 addresses:".to_string());
+                        for ip in settings.ban_list.ip_addresses.iter() {
+                            list.push("\n- ".to_string());
+                            list.push(ip.to_string());
+                        }
+                    }
+                    if !settings.ban_list.players.is_empty() {
+                        list.push("\nBanned profile IDs:".to_string());
+                        for guid in settings.ban_list.players.iter() {
+                            list.push("\n- ".to_string());
+                            list.push(guid.to_string());
+                        }
+                    }
+                    list.join("")
+                },
                 BanCommand::Enable => {
                     // update settings
                     let mut settings = self.view.get_mut_settings().write().await;

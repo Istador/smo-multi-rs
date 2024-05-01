@@ -50,6 +50,7 @@ pub enum ConsoleCommand {
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "lower")]
 pub enum BanCommand {
+    List,
     Enable,
     Disable,
     Player {
