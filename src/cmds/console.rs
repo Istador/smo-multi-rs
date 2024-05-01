@@ -1,5 +1,5 @@
 use crate::{guid::Guid, player_holder::PlayerSelect, settings::FlipPovSettings};
-use std::{convert::Infallible, str::FromStr};
+use std::{convert::Infallible, net::IpAddr, str::FromStr};
 
 use clap::Subcommand;
 
@@ -50,6 +50,9 @@ pub enum ConsoleCommand {
 pub enum BanCommand {
     Player {
         players: Vec<SinglePlayerSelect>,
+    },
+    IP {
+        ipv4: IpAddr,
     },
 }
 
