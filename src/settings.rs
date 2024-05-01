@@ -147,8 +147,8 @@ pub struct Udp {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct JsonApiSettings {
-    pub port: u16,
     pub enabled: bool,
+    pub port: u16,
     pub tokens: HashMap<String, HashSet<String>>,
 }
 
@@ -251,8 +251,8 @@ pub fn save_settings(settings: &Settings) -> Result<()> {
 impl Default for JsonApiSettings {
     fn default() -> Self {
         Self {
-            port: 1030,
             enabled: false,
+            port: 1030,
             tokens: Default::default(),
         }
     }
