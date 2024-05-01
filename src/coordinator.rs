@@ -111,47 +111,42 @@ impl Coordinator {
                         }
 
                         if stage == "CapWorldHomeStage" && *scenario_num == 0 {
-                            let mut data = self.lobby.get_mut_client(&packet.id)?;
-                            tracing::debug!("Player '{}' started new save", data.name);
-                            data.value_mut().speedrun_start = true;
-                            data.value_mut().shine_sync.clear();
-                            drop(data);
+                            let mut player = self.lobby.get_mut_client(&packet.id)?;
+                            tracing::debug!("Player '{}' started new save", player.name);
+                            player.value_mut().speedrun_start = true;
+                            player.value_mut().shine_sync.clear();
+                            drop(player);
                             let mut settings = self.lobby.shines.write().await;
                             settings.clear();
                             drop(settings);
                             self.persist_shines().await;
                         } else if stage == "WaterfallWordHomeStage" {
-                            let mut data = self.lobby.get_mut_client(&packet.id)?;
-                            tracing::debug!("Enabling shine sync for player '{}'", data.name);
-                            let was_speed_run = data.speedrun_start;
-                            data.speedrun_start = false;
-                            drop(data);
+                            let mut player = self.lobby.get_mut_client(&packet.id)?;
+                            tracing::debug!("Enabling shine sync for player '{}'", player.name);
+                            let was_speed_run = player.speedrun_start;
+                            player.speedrun_start = false;
+                            drop(player);
 
                             let settings = self.lobby.settings.read().await;
                             let should_sync_shines = settings.shines.enabled;
                             drop(settings);
 
                             if should_sync_shines && was_speed_run {
-                                let shine_bag = self.lobby.shines.clone();
-                                let client_shines = self
-                                    .lobby
-                                    .get_client(&packet.id)?
-                                    .value()
-                                    .shine_sync
-                                    .clone();
+                                let server_shines = self.lobby.shines.clone();
 
-                                let data = self.lobby.get_client(&packet.id)?;
-                                let channel = data.channel.clone();
-                                drop(data);
+                                let player = self.lobby.get_client(&packet.id)?;
+                                let player_channel = player.channel.clone();
+                                let player_shines = player.shine_sync.clone();
+                                drop(player);
 
                                 tokio::spawn(async move {
                                     tokio::time::sleep(Duration::from_secs(15)).await;
 
                                     let result = client_sync_shines(
-                                        channel,
-                                        shine_bag,
+                                        player_channel,
+                                        server_shines,
                                         &packet.id,
-                                        &client_shines,
+                                        &player_shines,
                                     )
                                     .await;
                                     if let Err(e) = result {
@@ -447,18 +442,20 @@ impl Coordinator {
         }
 
         for player_ref in self.lobby.players.iter() {
-            let data = player_ref.value();
-            let shines = &data.shine_sync;
+            let player = player_ref.value();
+            let player_shines = &player.shine_sync;
+            let server_shines = self.lobby.shines.clone();
             let sender_guid = Guid::default();
-            if data.speedrun_start {
+
+            if player.speedrun_start {
                 continue;
             }
 
             client_sync_shines(
-                data.channel.clone(),
-                self.lobby.shines.clone(),
+                player.channel.clone(),
+                server_shines,
                 &sender_guid,
-                &shines,
+                &player_shines,
             )
             .await?;
         }
