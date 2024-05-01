@@ -262,4 +262,15 @@ impl Stages {
     pub fn is_stage(input: &str) -> bool {
         return STAGE2ALIAS.contains_key(&input);
     }
+
+    pub fn stages_by_input(input: &str) -> Vec<String> {
+        if Self::is_alias(input) {
+            return STAGE2ALIAS.iter().filter(|(_k,v)| **v == input).map(|(k,_v)| k.to_string()).collect::<Vec<_>>();
+        }
+
+        return match Self::input2stage(input) {
+            Some(stage) => [stage].to_vec(),
+            _ => [].to_vec(),
+        }
+    }
 }

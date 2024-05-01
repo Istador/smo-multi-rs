@@ -139,6 +139,13 @@ impl Console {
                             list.push(guid.to_string());
                         }
                     }
+                    if !settings.ban_list.stages.is_empty() {
+                        list.push("\nBanned stages:".to_string());
+                        for stage in settings.ban_list.stages.iter() {
+                            list.push("\n- ".to_string());
+                            list.push(stage.to_string());
+                        }
+                    }
                     list.join("")
                 },
                 BanCommand::Enable => {
@@ -236,6 +243,23 @@ impl Console {
 
                     "Banned ip: ".to_string() + &ipv4.to_string()
                 },
+                BanCommand::Stage { stage } => {
+                    if Stages::input2stage(&stage).is_none() {
+                        "Invalid stage name!".to_string()
+                    } else {
+                        let stages = Stages::stages_by_input(&stage);
+
+                        // update settings
+                        let mut settings = self.view.get_mut_settings().write().await;
+                        for s in stages.iter() {
+                            settings.ban_list.stages.insert(s.to_string());
+                        }
+                        save_settings(&settings)?;
+                        drop(settings);
+
+                        "Banned stages: ".to_string() + &stages.join(", ")
+                    }
+                },
             },
             ConsoleCommand::Unban(subcmd) => match subcmd {
                 UnbanCommand::Profile { profile_id } => {
@@ -255,6 +279,23 @@ impl Console {
                     drop(settings);
 
                     "Unbanned ip: ".to_string() + &ipv4.to_string()
+                },
+                UnbanCommand::Stage { stage } => {
+                    if Stages::input2stage(&stage).is_none() {
+                        "Invalid stage name!".to_string()
+                    } else {
+                        let stages = Stages::stages_by_input(&stage);
+
+                        // update settings
+                        let mut settings = self.view.get_mut_settings().write().await;
+                        for s in stages.iter() {
+                            settings.ban_list.stages.remove(s);
+                        }
+                        save_settings(&settings)?;
+                        drop(settings);
+
+                        "Unbanned stages: ".to_string() + &stages.join(", ")
+                    }
                 },
             },
             ConsoleCommand::Crash { players } => {

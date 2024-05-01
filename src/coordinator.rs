@@ -14,7 +14,7 @@ use std::{collections::HashSet, sync::Arc, time::Duration};
 use tokio::{
     fs::File,
     io::AsyncWriteExt,
-    sync::{broadcast, mpsc, RwLock},
+    sync::{broadcast, mpsc, oneshot, RwLock},
 };
 use tracing::{info_span, Instrument};
 
@@ -82,6 +82,33 @@ impl Coordinator {
                         stage,
                     } => {
                         tracing::debug!("Got game packet {}->{}", stage, scenario_num);
+
+                        // entering a banned stage?
+                        let settings = self.lobby.settings.read().await;
+                        let is_stage_banned = settings.ban_list.enabled && settings.ban_list.stages.contains(stage);
+                        drop(settings);
+                        if is_stage_banned {
+                            tracing::warn!("Crashing player for entering banned stage {}.", stage);
+                            // crash player in 500ms
+                            tokio::spawn({
+                                let to_coord = self.lobby.to_coord.clone();
+                                async move {
+                                    tokio::time::sleep(Duration::from_millis(500)).await;
+                                    let (sender, recv) = oneshot::channel();
+                                    let _ = to_coord.send(
+                                        Command::External(
+                                            ExternalCommand::Player {
+                                                players : Players::Individual(vec![packet.id]),
+                                                command : PlayerCommand::Crash {},
+                                            },
+                                            sender
+                                        )
+                                    ).await;
+                                    recv.await
+                                }
+                            });
+                            return Ok(true);
+                        }
 
                         if stage == "CapWorldHomeStage" && *scenario_num == 0 {
                             let mut data = self.lobby.get_mut_client(&packet.id)?;

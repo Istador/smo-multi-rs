@@ -62,6 +62,9 @@ pub enum BanCommand {
     IP {
         ipv4: IpAddr,
     },
+    Stage {
+        stage: String,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -72,6 +75,9 @@ pub enum UnbanCommand {
     },
     IP {
         ipv4: IpAddr,
+    },
+    Stage {
+        stage: String,
     },
 }
 

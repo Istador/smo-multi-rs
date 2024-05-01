@@ -113,6 +113,7 @@ pub struct BanListSettings {
     pub enabled: bool,
     pub players: HashSet<Guid>,
     pub ip_addresses: HashSet<IpAddr>,
+    pub stages: HashSet<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -186,6 +187,7 @@ impl Default for BanListSettings {
             enabled: false,
             players: Default::default(),
             ip_addresses: Default::default(),
+            stages: Default::default(),
         }
     }
 }
