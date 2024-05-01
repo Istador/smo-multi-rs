@@ -260,7 +260,7 @@ impl Default for JsonApiSettings {
     fn default() -> Self {
         Self {
             enabled: false,
-            port: 1030,
+            port: 1027,
             tokens: Default::default(),
         }
     }

@@ -13,7 +13,7 @@ pub(in crate::json_api) struct JsonApiCommands {
 
 impl JsonApiCommands {
     pub async fn process(
-        view: &mut LobbyView,
+        view: &LobbyView,
         token: &String,
         data: &Option<String>,
     ) -> JsonApiCommands {

@@ -1,7 +1,8 @@
 use crate::{
     cmds::{ClientCommand, Command, ServerCommand},
     guid::Guid,
-    lobby::Lobby,
+    json_api::JsonApi,
+    lobby::{Lobby, LobbyView},
     net::{connection::Connection, udp_conn::UdpConnection, ConnectionType, Packet, PacketData, TagUpdate},
     player_holder::ClientChannel,
     types::{ChannelError, ClientInitError, ErrorSeverity, Result, SMOError, Vector3},
@@ -502,17 +503,23 @@ impl Client {
 
                 tracing::debug!("Initialized player");
 
-                Ok(Command::Server(ServerCommand::NewPlayer {
+                Ok(Some(Command::Server(ServerCommand::NewPlayer {
                     cli: client,
                     data,
                     connect_packet: Box::new(connect),
                     comm: to_cli,
-                }))
+                })))
+            }
+            PacketData::JsonApi { json } => {
+                JsonApi::handle(LobbyView::new(&lobby), conn.socket, conn.addr, json, false).await?;
+                Ok(None)
             }
             _ => Err(SMOError::ClientInit(ClientInitError::BadHandshake)),
         }?;
 
-        to_coord.send(new_player).await?;
+        if let Some(player) = new_player {
+            to_coord.send(player).await?;
+        }
         Ok(())
     }
 

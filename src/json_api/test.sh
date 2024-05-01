@@ -2,7 +2,7 @@
 
 TOKEN="SECRET_TOKEN_12345"
 HOST="localhost"
-PORT="1030"
+PORT="1027"
 
 DIR=`dirname "$0"`
 [ -f "$DIR/test.env" ] && source "$DIR/test.env"

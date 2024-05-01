@@ -63,7 +63,7 @@ impl JsonApi {
 
             let json_str = String::from_utf8(buff[..read_count.unwrap()].to_vec());
             if let Ok(json_str) = json_str {
-                let result = self.handle(stream, ip, json_str).await;
+                let result = JsonApi::handle(self.view.clone(), stream, ip, json_str, true).await;
                 if let Err(e) = result {
                     tracing::error!("Json api: {}", e);
                 }
@@ -72,12 +72,13 @@ impl JsonApi {
     }
 
     pub async fn handle(
-        &mut self,
+        view: LobbyView,
         mut socket: BufWriter<TcpStream>,
         addr: SocketAddr,
         json_str: String,
+        from_api_port: bool,
     ) -> Result<()> {
-        let settings = self.view.get_lobby().settings.read().await;
+        let settings = view.get_lobby().settings.read().await;
 
         if !settings.json_api.enabled {
             return Ok(());
@@ -85,6 +86,12 @@ impl JsonApi {
 
         if BlockClients::is_blocked(&addr).await {
             tracing::info!("Rejected blocked client {}", addr.ip());
+            return Ok(());
+        }
+
+        if !from_api_port && settings.json_api.port != settings.server.port {
+            tracing::warn!("{} is using the normal port {} instead of the separated API port {}", addr.ip(), settings.server.port, settings.json_api.port);
+            BlockClients::fail(&addr).await;
             return Ok(());
         }
 
@@ -113,13 +120,13 @@ impl JsonApi {
         }
 
         let response: Value = match req.kind.as_str() {
-            "Status" => json!(JsonApiStatus::create(&self.view, &req.token).await),
+            "Status" => json!(JsonApiStatus::create(&view, &req.token).await),
             "Permissions" => json!({
                 "Permissions": settings.json_api.tokens[&req.token],
             }),
             "Command" => {
                 drop(settings);
-                json!(JsonApiCommands::process(&mut self.view, &req.token, &req.data).await)
+                json!(JsonApiCommands::process(&view, &req.token, &req.data).await)
             }
             _ => json!({
                 "Error": ([req.kind, " is not implemented yet".to_string()].join("")),
