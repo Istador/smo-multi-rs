@@ -372,15 +372,9 @@ impl Client {
         let start_udp_handshake = l_set.udp.initiate_handshake;
         drop(l_set);
 
-        tracing::debug!("Initializing connection");
         let mut conn = Connection::new(socket);
-        conn.write_packet(&Packet::new(
-            Guid::default(),
-            PacketData::Init { max_players },
-        ))
-        .await?;
 
-        tracing::debug!("Waiting for reply");
+        tracing::debug!("Waiting for client init");
         let connect = conn.read_packet().await?;
 
         let new_player = match connect.data {
@@ -394,6 +388,14 @@ impl Client {
                     return Err(SMOError::ClientInit(ClientInitError::BannedID));
                 }
                 drop(settings);
+
+                // send server init
+                tracing::debug!("Send server init");
+                conn.write_packet(&Packet::new(
+                    Guid::default(),
+                    PacketData::Init { max_players },
+                ))
+                .await?;
 
                 match c_type {
                     ConnectionType::FirstConnection => {
