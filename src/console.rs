@@ -120,6 +120,24 @@ impl Console {
                 format!("Sent players to {}:{}", stage, scenario)
             }
             ConsoleCommand::Ban(subcmd) => match subcmd {
+                BanCommand::Enable => {
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.enabled = true;
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    "BanList enabled.".to_string()
+                },
+                BanCommand::Disable => {
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.enabled = false;
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    "BanList disabled.".to_string()
+                },
                 BanCommand::Player { players } => {
                     let players: PlayerSelect<String> = (&players[..]).into();
                     let players = players.into_guid_vec(&self.view).await?;
