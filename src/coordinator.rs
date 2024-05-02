@@ -113,7 +113,7 @@ impl Coordinator {
                         if stage == "CapWorldHomeStage" && *scenario_num == 0 {
                             let mut player = self.lobby.get_mut_client(&packet.id)?;
                             tracing::debug!("Player '{}' started new save", player.name);
-                            player.value_mut().speedrun_start = true;
+                            player.value_mut().disable_shine_sync = true;
                             player.value_mut().shine_sync.clear();
                             drop(player);
                             let mut settings = self.lobby.shines.write().await;
@@ -123,15 +123,15 @@ impl Coordinator {
                         } else if stage == "WaterfallWordHomeStage" {
                             let mut player = self.lobby.get_mut_client(&packet.id)?;
                             tracing::debug!("Enabling shine sync for player '{}'", player.name);
-                            let was_speed_run = player.speedrun_start;
-                            player.speedrun_start = false;
+                            let was_shine_sync_disabled = player.disable_shine_sync;
+                            player.disable_shine_sync = false;
                             drop(player);
 
                             let settings = self.lobby.settings.read().await;
                             let should_sync_shines = settings.shines.enabled;
                             drop(settings);
 
-                            if should_sync_shines && was_speed_run {
+                            if should_sync_shines && was_shine_sync_disabled {
                                 let server_shines = self.lobby.shines.clone();
 
                                 let player = self.lobby.get_client(&packet.id)?;
@@ -447,7 +447,7 @@ impl Coordinator {
             let server_shines = self.lobby.shines.clone();
             let sender_guid = Guid::default();
 
-            if player.speedrun_start {
+            if player.disable_shine_sync {
                 continue;
             }
 
