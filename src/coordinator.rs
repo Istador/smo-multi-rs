@@ -4,7 +4,7 @@ use crate::{
         ShineCommand,
     },
     guid::Guid,
-    lobby::Lobby,
+    lobby::{Lobby, LobbyView},
     net::{ConnectionType, Packet, PacketData, TagUpdate},
     player_holder::ClientChannel,
     types::Result,
@@ -118,38 +118,40 @@ impl Coordinator {
                             return Ok(true);
                         }
 
-                        if stage == "CapWorldHomeStage" && *scenario_num == 1 {
-                            let mut player = self.lobby.get_mut_client(&packet.id)?;
-                            tracing::debug!("Player '{}' started new save", player.name);
-                            player.value_mut().disable_shine_sync = true;
-                            player.value_mut().shine_sync.clear();
-                            drop(player);
-                            let mut settings = self.lobby.shines.write().await;
-                            settings.clear();
-                            drop(settings);
-                            self.persist_shines().await;
-                        } else if stage == "WaterfallWordHomeStage" {
-                            let mut player = self.lobby.get_mut_client(&packet.id)?;
-                            tracing::debug!("Enabling shine sync for player '{}'", player.name);
-                            let was_shine_sync_disabled = player.disable_shine_sync;
-                            player.disable_shine_sync = false;
-                            drop(player);
-
-                            let settings = self.lobby.settings.read().await;
-                            let should_sync_shines = settings.shines.enabled;
-                            drop(settings);
-
-                            if should_sync_shines && was_shine_sync_disabled {
-                                let server_shines = self.lobby.shines.clone();
-
-                                let player = self.lobby.get_client(&packet.id)?;
-                                let player_channel = player.channel.clone();
-                                let excluded_shines = &self.lobby.settings.read().await.shines.excluded;
-                                let player_shines = player.shine_sync.union(&excluded_shines).copied().collect();
+                        // player is on a new save file before entering Cascade kingdom
+                        let is_shine_sync_disabled = self.lobby.get_client(&packet.id)?.disable_shine_sync;
+                        if (stage == "CapWorldHomeStage" || stage == "CapWorldTowerStage") && *scenario_num == 1 {
+                            if !is_shine_sync_disabled {
+                                // disable shine sync and clear collected shines for this player
+                                let mut player = self.lobby.get_mut_client(&packet.id)?;
+                                tracing::info!("Player '{}' entered Cap on new save, preventing moon sync until Cascade", player.name);
+                                player.value_mut().disable_shine_sync = true;
+                                player.value_mut().shine_sync.clear();
                                 drop(player);
 
-                                tokio::spawn(async move {
-                                    tokio::time::sleep(Duration::from_secs(15)).await;
+                                // clear collected shines remembered by the server
+                                self.lobby.shines.write().await.clear();
+                                self.persist_shines().await;
+                                tracing::info!("Cleared server memory of collected moons");
+                            }
+                        } else if is_shine_sync_disabled {
+                            tracing::info!("Player {} entered Cascade or later with moon sync disabled, enabling moon sync again", self.lobby.get_client(&packet.id)?.name);
+                            let mut lobby = LobbyView::new(&self.lobby);
+                            tokio::spawn(async move {
+                                // sleep to prevent sending it too early (just a safety measure that is likely not necessary)
+                                tokio::time::sleep(Duration::from_millis(2000)).await;
+                                // enable shine sync again for this player
+                                lobby.get_mut_client(&packet.id)?.value_mut().disable_shine_sync = false;
+                                // sync shines to player
+                                let shine_sync_enabled = lobby.get_lobby().settings.read().await.shines.enabled;
+                                if shine_sync_enabled {
+                                    let server_shines = lobby.get_lobby().shines.clone();
+
+                                    let player = lobby.get_lobby().get_client(&packet.id)?;
+                                    let player_channel = player.channel.clone();
+                                    let excluded_shines = &lobby.get_lobby().settings.read().await.shines.excluded;
+                                    let player_shines = player.shine_sync.union(&excluded_shines).copied().collect();
+                                    drop(player);
 
                                     let result = client_sync_shines(
                                         player_channel,
@@ -161,8 +163,9 @@ impl Coordinator {
                                     if let Err(e) = result {
                                         tracing::warn!("Initial shine sync failed: {e}")
                                     }
-                                });
-                            }
+                                }
+                                Ok(()) as Result<()>
+                            });
                         }
                         tracing::debug!("Changing scenarios: {} {}", scenario_num, stage);
 
