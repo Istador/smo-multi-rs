@@ -234,10 +234,6 @@ impl Client {
                         data.last_player_packet = None;
                     }
                 }
-                if stage == "CapWorldHomeStage" && *scenario_num == 0 {
-                    data.speedrun_start = true;
-                    data.shine_sync.clear();
-                }
                 data.last_game_packet = Some(packet.clone());
                 drop(data);
                 PacketDestination::Coordinator
