@@ -118,7 +118,7 @@ impl Coordinator {
                             return Ok(true);
                         }
 
-                        if stage == "CapWorldHomeStage" && *scenario_num == 0 {
+                        if stage == "CapWorldHomeStage" && *scenario_num == 1 {
                             let mut player = self.lobby.get_mut_client(&packet.id)?;
                             tracing::debug!("Player '{}' started new save", player.name);
                             player.value_mut().disable_shine_sync = true;
