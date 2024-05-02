@@ -129,6 +129,7 @@ pub struct DiscordSettings {
 pub struct ShineTable {
     pub enabled: bool,
     pub excluded: BTreeSet<i32>,
+    pub clear_on_new_saves: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -217,6 +218,7 @@ impl Default for ShineTable {
         Self {
           enabled: true,
           excluded: BTreeSet::from([ 496 ]),
+          clear_on_new_saves: false,
         }
     }
 }

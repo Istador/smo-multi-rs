@@ -130,9 +130,12 @@ impl Coordinator {
                                 drop(player);
 
                                 // clear collected shines remembered by the server
-                                self.lobby.shines.write().await.clear();
-                                self.persist_shines().await;
-                                tracing::info!("Cleared server memory of collected moons");
+                                let clear_on_new_saves = self.lobby.settings.read().await.shines.clear_on_new_saves;
+                                if clear_on_new_saves {
+                                    self.lobby.shines.write().await.clear();
+                                    self.persist_shines().await;
+                                    tracing::info!("Cleared server memory of collected moons");
+                                }
                             }
                         } else if is_shine_sync_disabled {
                             tracing::info!("Player {} entered Cascade or later with moon sync disabled, enabling moon sync again", self.lobby.get_client(&packet.id)?.name);
