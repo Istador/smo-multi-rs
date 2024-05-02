@@ -128,6 +128,7 @@ pub struct DiscordSettings {
 #[serde(rename_all = "PascalCase")]
 pub struct ShineTable {
     pub enabled: bool,
+    pub excluded: BTreeSet<i32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -213,7 +214,10 @@ impl Default for PersistShine {
 
 impl Default for ShineTable {
     fn default() -> Self {
-        Self { enabled: true }
+        Self {
+          enabled: true,
+          excluded: BTreeSet::from([ 496 ]),
+        }
     }
 }
 

@@ -139,6 +139,12 @@ pub enum ShineArg {
         #[arg(action = clap::ArgAction::Set)]
         should_sync: bool,
     },
+    Include {
+        id: i32,
+    },
+    Exclude {
+        id: i32,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]

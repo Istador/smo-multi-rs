@@ -481,13 +481,26 @@ impl Console {
             },
             ConsoleCommand::Shine(shine) => match shine {
                 ShineArg::List => {
+                    let mut out = "Shines: ".to_string();
+
                     let shines = self.view.get_lobby().shines.read().await;
-                    let str_shines = shines
+                    out += &shines
                         .iter()
                         .map(ToString::to_string)
                         .collect::<Vec<_>>()
                         .join(", ");
-                    str_shines
+
+                    let settings = self.view.get_lobby().settings.read().await;
+                    if settings.shines.excluded.len() > 0 {
+                        out += "\nExcluded Shines: ";
+                        out += &settings.shines.excluded
+                            .iter()
+                            .map(ToString::to_string)
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                    }
+
+                    out
                 }
                 ShineArg::Clear => {
                     self.request_comm(ExternalCommand::Shine {
@@ -522,6 +535,22 @@ impl Console {
                         "Disabled shine sync"
                     }
                     .to_string()
+                }
+                ShineArg::Include { id } => {
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.shines.excluded.remove(&id);
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    format!("No longer exclude shine {} from syncing", id)
+                }
+                ShineArg::Exclude { id } => {
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.shines.excluded.insert(id);
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    format!("Exclude shine {} from syncing", id)
                 }
             },
             ConsoleCommand::Udp(udpcmd) => match udpcmd {

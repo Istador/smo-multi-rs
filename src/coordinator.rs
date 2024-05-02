@@ -10,7 +10,7 @@ use crate::{
     types::Result,
 };
 
-use std::{collections::HashSet, sync::Arc, time::Duration};
+use std::{collections::BTreeSet, sync::Arc, time::Duration};
 use tokio::{
     fs::File,
     io::AsyncWriteExt,
@@ -19,7 +19,7 @@ use tokio::{
 use tracing::{info_span, Instrument};
 
 pub type SyncShineBag = Arc<RwLock<ShineBag>>;
-pub type ShineBag = HashSet<i32>;
+pub type ShineBag = BTreeSet<i32>;
 
 pub struct Coordinator {
     lobby: Lobby,
@@ -70,9 +70,17 @@ impl Coordinator {
                         self.sync_all_shines().await?;
                     }
                     PacketData::Shine { shine_id, .. } => {
-                        self.lobby.shines.write().await.insert(*shine_id);
-                        tracing::info!("Got moon {shine_id}");
-                        self.sync_all_shines().await?;
+                        let settings = self.lobby.settings.read().await;
+                        let is_excluded = settings.shines.excluded.contains(shine_id);
+                        drop(settings);
+
+                        if is_excluded {
+                            tracing::info!("Got moon {shine_id} (excluded)");
+                        } else {
+                            self.lobby.shines.write().await.insert(*shine_id);
+                            tracing::info!("Got moon {shine_id}");
+                            self.sync_all_shines().await?;
+                        }
 
                         return Ok(true);
                     }
@@ -136,7 +144,8 @@ impl Coordinator {
 
                                 let player = self.lobby.get_client(&packet.id)?;
                                 let player_channel = player.channel.clone();
-                                let player_shines = player.shine_sync.clone();
+                                let excluded_shines = &self.lobby.settings.read().await.shines.excluded;
+                                let player_shines = player.shine_sync.union(&excluded_shines).copied().collect();
                                 drop(player);
 
                                 tokio::spawn(async move {
@@ -441,9 +450,11 @@ impl Coordinator {
             return Ok(());
         }
 
+        let excluded_shines = &settings.shines.excluded;
+
         for player_ref in self.lobby.players.iter() {
             let player = player_ref.value();
-            let player_shines = &player.shine_sync;
+            let player_shines = player.shine_sync.union(&excluded_shines).copied().collect();
             let server_shines = self.lobby.shines.clone();
             let sender_guid = Guid::default();
 

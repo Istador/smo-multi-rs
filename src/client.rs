@@ -9,7 +9,7 @@ use crate::{
 use dashmap::mapref::one::{Ref, RefMut};
 use nalgebra::UnitQuaternion;
 use std::{
-    collections::{hash_map::RandomState, HashSet},
+    collections::{hash_map::RandomState, BTreeSet},
     net::{IpAddr, Ipv4Addr, SocketAddr},
     time::Duration,
 };
@@ -40,7 +40,7 @@ pub struct Client {
 pub struct PlayerData {
     pub ipv4: Option<IpAddr>,
     pub name: String,
-    pub shine_sync: HashSet<i32>,
+    pub shine_sync: BTreeSet<i32>,
     pub scenario: i8,
     pub is_2d: bool,
     pub is_seeking: Option<bool>,
