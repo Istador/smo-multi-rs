@@ -1,6 +1,8 @@
-/.git/
 /.dockerignore
+/.git/
+/bin/
 /data/
+/docker-build.sh
 /docker-compose.yml
 /Dockerfile
 /examples/*/target
