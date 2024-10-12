@@ -5,7 +5,7 @@ use crate::{
     },
     guid::Guid,
     lobby::{Lobby, LobbyView},
-    net::{ConnectionType, Packet, PacketData, TagUpdate},
+    net::{ConnectionType, GameMode, Packet, PacketData, TagUpdate},
     player_holder::ClientChannel,
     types::Result,
 };
@@ -233,6 +233,7 @@ impl Coordinator {
                     if let Some((minutes, seconds)) = time {
                         // TODO test if is_it is the correct default
                         let tag_packet = PacketData::Tag {
+                            game_mode: GameMode::Legacy,
                             update_type: TagUpdate::Time,
                             is_it: false,
                             minutes,
@@ -244,6 +245,7 @@ impl Coordinator {
 
                     if let Some(is_seeking) = is_seeking {
                         let tag_packet = PacketData::Tag {
+                            game_mode: GameMode::Legacy,
                             update_type: TagUpdate::State,
                             is_it: is_seeking,
                             minutes: 0,
@@ -416,6 +418,7 @@ impl Coordinator {
             self.broadcast(&ClientCommand::Packet(Packet::new(
                 client_id,
                 PacketData::Tag {
+                    game_mode   : GameMode::Legacy,
                     update_type : TagUpdate::Both,
                     is_it       : false,
                     seconds     : 0,

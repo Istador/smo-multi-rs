@@ -3,7 +3,7 @@ use crate::{
     guid::Guid,
     json_api::JsonApi,
     lobby::{Lobby, LobbyView},
-    net::{connection::Connection, udp_conn::UdpConnection, ConnectionType, Packet, PacketData, TagUpdate},
+    net::{connection::Connection, udp_conn::UdpConnection, ConnectionType, GameMode, Packet, PacketData, TagUpdate},
     player_holder::ClientChannel,
     types::{ChannelError, ClientInitError, ErrorSeverity, Result, SMOError, Vector3},
 };
@@ -41,6 +41,7 @@ pub struct Client {
 pub struct PlayerData {
     pub ipv4: Option<IpAddr>,
     pub name: String,
+    pub game_mode: GameMode,
     pub shine_sync: BTreeSet<i32>,
     pub scenario: i8,
     pub is_2d: bool,
@@ -60,6 +61,7 @@ impl PlayerData {
         Self {
             ipv4: Default::default(),
             name: Default::default(),
+            game_mode: GameMode::None,
             shine_sync: Default::default(),
             scenario: Default::default(),
             is_2d: Default::default(),
@@ -92,6 +94,7 @@ impl PlayerData {
         Some(Packet::new(
             guid,
             PacketData::Tag {
+                game_mode: GameMode::Legacy,
                 update_type,
                 is_it   : self.is_seeking.unwrap_or(false),
                 seconds : u8::try_from(seconds % 60).unwrap_or(59),
@@ -240,6 +243,7 @@ impl Client {
                 PacketDestination::Coordinator
             }
             PacketData::Tag {
+                game_mode,
                 update_type,
                 is_it,
                 seconds,
@@ -259,6 +263,18 @@ impl Client {
                     }
                     _ => {}
                 }
+                data.game_mode = *game_mode;
+                drop(data);
+                PacketDestination::Broadcast
+            }
+            PacketData::GameMode {
+                game_mode,
+                ..
+            } => {
+                let mut data = self.get_player_mut();
+                data.time       = None;
+                data.is_seeking = None;
+                data.game_mode  = *game_mode;
                 drop(data);
                 PacketDestination::Broadcast
             }

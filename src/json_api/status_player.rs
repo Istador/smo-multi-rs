@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::net::IpAddr;
 
 use crate::lobby::LobbyView;
-use crate::net::{Packet, PacketData};
+use crate::net::{GameMode, Packet, PacketData};
 use crate::stages::Stages;
 
 #[derive(Serialize)]
@@ -13,6 +13,9 @@ pub(in crate::json_api) struct JsonApiStatusPlayer {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    game_mode: Option<i8>, // display u4 (0..15) as (-1..14)
 
     #[serde(skip_serializing_if = "Option::is_none")]
     kingdom: Option<String>,
@@ -55,6 +58,7 @@ impl JsonApiStatusPlayer {
 
         let id_perm       = permissions.contains("Status/Players/ID");
         let name_perm     = permissions.contains("Status/Players/Name");
+        let gamemode_perm = permissions.contains("Status/Players/GameMode");
         let kingdom_perm  = permissions.contains("Status/Players/Kingdom");
         let stage_perm    = permissions.contains("Status/Players/Stage");
         let scenario_perm = permissions.contains("Status/Players/Scenario");
@@ -74,6 +78,7 @@ impl JsonApiStatusPlayer {
 
             let client = client_ref.value();
             let name = name_perm.then(|| client.name.to_string());
+            let game_mode = gamemode_perm.then(|| ((GameMode::to_u8(client.game_mode) + 1) % 16) as i8 - 1);
 
             let kingdom = kingdom_perm
                 .then(|| match &client.last_game_packet {
@@ -180,6 +185,7 @@ impl JsonApiStatusPlayer {
             let player = JsonApiStatusPlayer {
                 id,
                 name,
+                game_mode,
                 kingdom,
                 stage,
                 scenario,

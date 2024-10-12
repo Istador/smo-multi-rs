@@ -97,10 +97,16 @@ pub enum PacketData {
         stage: String,
     },
     Tag {
+        game_mode: GameMode,
         update_type: TagUpdate,
         is_it: bool,
         seconds: u8,
         minutes: u16,
+    },
+    GameMode {
+        game_mode: GameMode,
+        update_type: u8,
+        data: Vec<u8>,
     },
     Connect {
         c_type: ConnectionType,
@@ -141,6 +147,7 @@ impl PacketData {
             Self::Cap { .. } => 29 + CAP_ANIM_SIZE,
             Self::Game { .. } => 2 + STAGE_GAME_NAME_SIZE,
             Self::Tag { .. } => 5,
+            Self::GameMode { data, .. } => 1 + data.len(),
             Self::Connect { .. } => 6 + CLIENT_NAME_SIZE,
             Self::Disconnect { .. } => 0,
             Self::Costume { .. } => COSTUME_NAME_SIZE * 2,
@@ -162,6 +169,7 @@ impl PacketData {
             Self::Cap { .. } => 3,
             Self::Game { .. } => 4,
             Self::Tag { .. } => 5,
+            Self::GameMode { .. } => 5,
             Self::Connect { .. } => 6,
             Self::Disconnect { .. } => 7,
             Self::Costume { .. } => 8,
@@ -183,6 +191,7 @@ impl PacketData {
             Self::Cap { .. } => "cap",
             Self::Game { .. } => "game",
             Self::Tag { .. } => "tag",
+            Self::GameMode { .. } => "gamemode",
             Self::Connect { .. } => "connect",
             Self::Disconnect { .. } => "disconnect",
             Self::Costume { .. } => "costume",
@@ -203,6 +212,70 @@ impl PacketData {
 pub enum ConnectionType {
     FirstConnection,
     Reconnecting,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameMode {
+    Legacy      =  0,
+    HideAndSeek =  1,
+    Sardines    =  2,
+    FreezeTag   =  3,
+    Unknown04   =  4,
+    Unknown05   =  5,
+    Unknown06   =  6,
+    Unknown07   =  7,
+    Unknown08   =  8,
+    Unknown09   =  9,
+    Unknown10   = 10,
+    Unknown11   = 11,
+    Unknown12   = 12,
+    Unknown13   = 13,
+    Reserved    = 14, // reserved for possible extensions (indicating an extra byte for future gamemodes)
+    None        = 15,
+}
+
+impl GameMode {
+    pub fn from_u8(x: u8) -> Self {
+        match x {
+             0 => GameMode::Legacy,
+             1 => GameMode::HideAndSeek,
+             2 => GameMode::Sardines,
+             3 => GameMode::FreezeTag,
+             4 => GameMode::Unknown04,
+             5 => GameMode::Unknown05,
+             6 => GameMode::Unknown06,
+             7 => GameMode::Unknown07,
+             8 => GameMode::Unknown08,
+             9 => GameMode::Unknown09,
+            10 => GameMode::Unknown10,
+            11 => GameMode::Unknown11,
+            12 => GameMode::Unknown12,
+            13 => GameMode::Unknown13,
+            14 => GameMode::Reserved,
+             _ => GameMode::None,
+        }
+    }
+    pub fn to_u8(x: Self) -> u8 {
+        match x {
+            GameMode::Legacy      =>  0,
+            GameMode::HideAndSeek =>  1,
+            GameMode::Sardines    =>  2,
+            GameMode::FreezeTag   =>  3,
+            GameMode::Unknown04   =>  4,
+            GameMode::Unknown05   =>  5,
+            GameMode::Unknown06   =>  6,
+            GameMode::Unknown07   =>  7,
+            GameMode::Unknown08   =>  8,
+            GameMode::Unknown09   =>  9,
+            GameMode::Unknown10   => 10,
+            GameMode::Unknown11   => 11,
+            GameMode::Unknown12   => 12,
+            GameMode::Unknown13   => 13,
+            GameMode::Reserved    => 14,
+            GameMode::None        => 15,
+        }
+    }
 }
 
 #[repr(u8)]
@@ -265,16 +338,29 @@ where
                 scenario_num: buf.get_i8(),
                 stage: buf_size_to_string(buf, STAGE_GAME_NAME_SIZE)?,
             },
-            5 => PacketData::Tag {
-                update_type: match buf.get_u8() {
-                    1 => TagUpdate::Time,
-                    2 => TagUpdate::State,
-                    3 => TagUpdate::Both,
-                    _ => TagUpdate::Unknown,
-                },
-                is_it: buf.get_u8() != 0,
-                seconds: buf.get_u8(),
-                minutes: buf.get_u16_le(),
+            5 => {
+                let both = buf.get_u8();
+                let game_mode = GameMode::from_u8((both & 0b11110000) >> 4);
+                let update_type = (both & 0b1111) as u8;
+                match (game_mode, update_type) {
+                    (GameMode::HideAndSeek, _) | (GameMode::Sardines, _) | (GameMode::Legacy, 3) => PacketData::Tag {
+                        game_mode,
+                        update_type: match update_type {
+                            1 => TagUpdate::Time,
+                            2 => TagUpdate::State,
+                            3 => TagUpdate::Both,
+                            _ => TagUpdate::Unknown,
+                        },
+                        is_it: buf.get_u8() != 0,
+                        seconds: buf.get_u8(),
+                        minutes: buf.get_u16_le(),
+                    },
+                    _ => PacketData::GameMode {
+                        game_mode,
+                        update_type,
+                        data: buf.copy_to_bytes((p_size - 1).into())[..].to_vec(),
+                    },
+                }
             },
             6 => {
                 let c_type = if buf.get_u32_le() == 0 {
@@ -393,6 +479,7 @@ where
                 buf.put_slice(&str_to_sized_array::<STAGE_GAME_NAME_SIZE>(stage));
             }
             PacketData::Tag {
+                game_mode,
                 update_type,
                 is_it,
                 seconds,
@@ -404,10 +491,18 @@ where
                     TagUpdate::State   => 2,
                     TagUpdate::Both    => 3,
                 };
-                buf.put_u8(tag);
+                buf.put_u8((GameMode::to_u8(*game_mode) << 4) | tag);
                 buf.put_u8((*is_it).into());
                 buf.put_u8(*seconds);
                 buf.put_u16_le(*minutes);
+            }
+            PacketData::GameMode {
+                game_mode,
+                update_type,
+                data,
+            } => {
+                buf.put_u8((GameMode::to_u8(*game_mode) << 4) | update_type);
+                buf.put_slice(&data[..])
             }
             PacketData::Connect {
                 c_type,
