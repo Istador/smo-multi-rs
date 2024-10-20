@@ -3,6 +3,7 @@ use std::{fmt::Debug, io::Cursor};
 use super::encoding::{Decodable, Encodable};
 use crate::{
     guid::Guid,
+    net::GameMode,
     types::{Costume, EncodingError, Quaternion, Vector3},
 };
 use bytes::{Buf, BufMut};
@@ -212,70 +213,6 @@ impl PacketData {
 pub enum ConnectionType {
     FirstConnection,
     Reconnecting,
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GameMode {
-    Legacy      =  0,
-    HideAndSeek =  1,
-    Sardines    =  2,
-    FreezeTag   =  3,
-    Unknown04   =  4,
-    Unknown05   =  5,
-    Unknown06   =  6,
-    Unknown07   =  7,
-    Unknown08   =  8,
-    Unknown09   =  9,
-    Unknown10   = 10,
-    Unknown11   = 11,
-    Unknown12   = 12,
-    Unknown13   = 13,
-    Reserved    = 14, // reserved for possible extensions (indicating an extra byte for future gamemodes)
-    None        = 15,
-}
-
-impl GameMode {
-    pub fn from_u8(x: u8) -> Self {
-        match x {
-             0 => GameMode::Legacy,
-             1 => GameMode::HideAndSeek,
-             2 => GameMode::Sardines,
-             3 => GameMode::FreezeTag,
-             4 => GameMode::Unknown04,
-             5 => GameMode::Unknown05,
-             6 => GameMode::Unknown06,
-             7 => GameMode::Unknown07,
-             8 => GameMode::Unknown08,
-             9 => GameMode::Unknown09,
-            10 => GameMode::Unknown10,
-            11 => GameMode::Unknown11,
-            12 => GameMode::Unknown12,
-            13 => GameMode::Unknown13,
-            14 => GameMode::Reserved,
-             _ => GameMode::None,
-        }
-    }
-    pub fn to_u8(x: Self) -> u8 {
-        match x {
-            GameMode::Legacy      =>  0,
-            GameMode::HideAndSeek =>  1,
-            GameMode::Sardines    =>  2,
-            GameMode::FreezeTag   =>  3,
-            GameMode::Unknown04   =>  4,
-            GameMode::Unknown05   =>  5,
-            GameMode::Unknown06   =>  6,
-            GameMode::Unknown07   =>  7,
-            GameMode::Unknown08   =>  8,
-            GameMode::Unknown09   =>  9,
-            GameMode::Unknown10   => 10,
-            GameMode::Unknown11   => 11,
-            GameMode::Unknown12   => 12,
-            GameMode::Unknown13   => 13,
-            GameMode::Reserved    => 14,
-            GameMode::None        => 15,
-        }
-    }
 }
 
 #[repr(u8)]
