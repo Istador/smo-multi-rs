@@ -178,6 +178,34 @@ impl Coordinator {
                             self.merge_scenario(&packet).await?;
                         }
                     }
+                    PacketData::Tag { game_mode, .. } | PacketData::GameMode { game_mode, .. } => {
+                        // entering a banned gamemode?
+                        let settings = self.lobby.settings.read().await;
+                        let is_gamemode_banned = settings.ban_list.enabled && settings.ban_list.game_modes.contains(&GameMode::to_i8(*game_mode));
+                        drop(settings);
+                        if is_gamemode_banned {
+                            tracing::warn!("Crashing player for entering banned game mode {}.", game_mode);
+                            // crash player in 500ms
+                            tokio::spawn({
+                                let to_coord = self.lobby.to_coord.clone();
+                                async move {
+                                    tokio::time::sleep(Duration::from_millis(500)).await;
+                                    let (sender, recv) = oneshot::channel();
+                                    let _ = to_coord.send(
+                                        Command::External(
+                                            ExternalCommand::Player {
+                                                players : Players::Individual(vec![packet.id]),
+                                                command : PlayerCommand::Crash {},
+                                            },
+                                            sender
+                                        )
+                                    ).await;
+                                    recv.await
+                                }
+                            });
+                            return Ok(true);
+                        }
+                    }
                     _ => {}
                 };
                 self.broadcast(&ClientCommand::Packet(packet))?;

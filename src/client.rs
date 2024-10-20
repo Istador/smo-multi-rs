@@ -265,7 +265,7 @@ impl Client {
                 }
                 data.game_mode = *game_mode;
                 drop(data);
-                PacketDestination::Broadcast
+                PacketDestination::Coordinator
             }
             PacketData::GameMode {
                 game_mode,
@@ -276,7 +276,7 @@ impl Client {
                 data.is_seeking = None;
                 data.game_mode  = *game_mode;
                 drop(data);
-                PacketDestination::Broadcast
+                PacketDestination::Coordinator
             }
             PacketData::Shine { shine_id, .. } => {
                 let mut data = self.get_player_mut();

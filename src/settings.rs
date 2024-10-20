@@ -114,6 +114,7 @@ pub struct BanListSettings {
     pub players: BTreeSet<Guid>,
     pub ip_addresses: BTreeSet<IpAddr>,
     pub stages: BTreeSet<String>,
+    pub game_modes: BTreeSet<i8>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -190,6 +191,7 @@ impl Default for BanListSettings {
             players: Default::default(),
             ip_addresses: Default::default(),
             stages: Default::default(),
+            game_modes: Default::default(),
         }
     }
 }
