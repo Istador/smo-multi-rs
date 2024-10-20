@@ -5,6 +5,7 @@ use crate::{
     },
     guid::Guid,
     lobby::LobbyView,
+    net::GameMode,
     player_holder::PlayerSelect,
     settings::{load_settings, save_settings},
     stages::Stages,
@@ -144,6 +145,13 @@ impl Console {
                         for stage in settings.ban_list.stages.iter() {
                             list.push("\n- ".to_string());
                             list.push(stage.to_string());
+                        }
+                    }
+                    if !settings.ban_list.game_modes.is_empty() {
+                        list.push("\nBanned gamemodes:".to_string());
+                        for game_mode in settings.ban_list.game_modes.iter() {
+                            list.push("\n- ".to_string());
+                            list.push(GameMode::from_i8(*game_mode).to_string());
                         }
                     }
                     list.join("")
