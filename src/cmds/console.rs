@@ -82,6 +82,9 @@ pub enum UnbanCommand {
     Stage {
         stage: String,
     },
+    GameMode {
+        game_mode: GameMode,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]

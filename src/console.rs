@@ -314,6 +314,15 @@ impl Console {
                         "Unbanned stages: ".to_string() + &stages.join(", ")
                     }
                 },
+                UnbanCommand::GameMode { game_mode } => {
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.game_modes.remove(&GameMode::to_i8(game_mode));
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    "Unbanned gamemode: ".to_string() + &game_mode.to_string()
+                },
             },
             ConsoleCommand::Crash { players } => {
                 let players: PlayerSelect<String> = (&players[..]).into();
