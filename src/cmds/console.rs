@@ -1,4 +1,4 @@
-use crate::{guid::Guid, player_holder::PlayerSelect, settings::FlipPovSettings};
+use crate::{guid::Guid, net::GameMode, player_holder::PlayerSelect, settings::FlipPovSettings};
 use std::{convert::Infallible, net::IpAddr, str::FromStr};
 
 use clap::Subcommand;
@@ -64,6 +64,9 @@ pub enum BanCommand {
     },
     Stage {
         stage: String,
+    },
+    GameMode {
+        game_mode: GameMode,
     },
 }
 

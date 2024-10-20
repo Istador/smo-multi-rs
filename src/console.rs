@@ -268,6 +268,15 @@ impl Console {
                         "Banned stages: ".to_string() + &stages.join(", ")
                     }
                 },
+                BanCommand::GameMode { game_mode } => {
+                    // update settings
+                    let mut settings = self.view.get_mut_settings().write().await;
+                    settings.ban_list.game_modes.insert(GameMode::to_i8(game_mode));
+                    save_settings(&settings)?;
+                    drop(settings);
+
+                    "Banned gamemode: ".to_string() + &game_mode.to_string()
+                },
             },
             ConsoleCommand::Unban(subcmd) => match subcmd {
                 UnbanCommand::Profile { profile_id } => {
